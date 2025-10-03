@@ -1,0 +1,36 @@
+## .NET
+bin/
+obj/
+*.user
+*.suo
+*.cache
+*.pdb
+*.dll
+*.exe
+appsettings.Development.json
+
+## Visual Studio
+.vs/
+*.csproj.user
+
+## NuGet
+packages/
+.nuget/
+*.nupkg
+
+## VS Code
+.vscode/
+
+## IDE
+.idea/
+
+## Database
+*.mdf
+*.ldf
+
+## Logs
+*.log
+logs/
+
+## Runtime
+appsettings.local.json
