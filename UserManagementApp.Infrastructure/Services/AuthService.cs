@@ -26,9 +26,12 @@ namespace UserManagementApp.Infrastructure.Services
             _context = context;
         }
 
+        // IMPORTANT: RegisterAsync creates a new user with unverified status
+        // NOTE: Password is hashed using BCrypt for security
+        // NOTA BENE: Email verification is sent asynchronously as per requirements
         public async Task<User> RegisterAsync(string name, string email, string password)
 {
-    // Password hashing
+    // IMPORTANT: Hash password before storing - never store plain text passwords
     var passwordHash = BCrypt.Net.BCrypt.HashPassword(password);
 
     var user = new User
@@ -37,28 +40,36 @@ namespace UserManagementApp.Infrastructure.Services
         Email = email,
         PasswordHash = passwordHash,
         Status = UserStatus.Unverified,
-        RegistrationTime = DateTime.UtcNow, // Use UTC
+        RegistrationTime = DateTime.UtcNow, // Use UTC for consistency across timezones
         EmailVerificationToken = Guid.NewGuid().ToString()
     };
 
+    // NOTE: CreateAsync will throw DbUpdateException if email already exists due to unique index
     var createdUser = await _userRepository.CreateAsync(user);
 
-    // Send verification email asynchronously
+    // IMPORTANT: Send verification email asynchronously to not block user registration
+    // NOTA BENE: Fire and forget pattern - email failures won't affect registration success
     _ = Task.Run(() => _emailService.SendVerificationEmailAsync(createdUser.Email, createdUser.EmailVerificationToken!));
 
     return createdUser;
 }
 
+        // IMPORTANT: LoginAsync authenticates user and updates last login time
+        // NOTE: Blocked users cannot login, but unverified users can (requirement)
+        // NOTA BENE: Always verify password hash instead of comparing plain text
         public async Task<User?> LoginAsync(string email, string password)
         {
             var user = await _userRepository.GetByEmailAsync(email);
             if (user == null) return null;
 
-            // Users with unverified email can login (as per requirement)
+            // IMPORTANT: Users with unverified email can login (as per requirement)
+            // NOTE: Only blocked users are prevented from logging in
             if (user.Status == UserStatus.Blocked) return null;
 
+            // IMPORTANT: Use BCrypt.Verify to securely compare password with hash
             if (BCrypt.Net.BCrypt.Verify(password, user.PasswordHash))
             {
+                // NOTE: Update last login and activity times for tracking
                 await _userRepository.UpdateLastLoginAsync(user.Id);
                 return user;
             }

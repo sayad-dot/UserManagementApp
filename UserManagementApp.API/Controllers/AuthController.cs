@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Mvc;
 using UserManagementApp.API.DTOs;
 using UserManagementApp.Core.Interfaces;
 
+
 namespace UserManagementApp.API.Controllers
 {
     [ApiController]
@@ -32,12 +33,12 @@ namespace UserManagementApp.API.Controllers
 
                 return Ok(response);
             }
-            catch (Microsoft.EntityFrameworkCore.DbUpdateException dbEx)
+            catch (Microsoft.EntityFrameworkCore.DbUpdateException)
             {
                 // This will catch the unique constraint violation from PostgreSQL
                 return BadRequest(new { Message = "Email already exists." });
             }
-            catch (Exception ex)
+            catch (Exception)
             {
                 return BadRequest(new { Message = "Registration failed." });
             }

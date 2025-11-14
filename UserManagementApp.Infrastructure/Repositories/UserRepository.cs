@@ -32,9 +32,11 @@ namespace UserManagementApp.Infrastructure.Repositories
             return await _context.Users.FirstOrDefaultAsync(u => u.Email == email);
         }
 
+        // IMPORTANT: GetAllAsync retrieves all users with sorting
+        // NOTE: THIRD REQUIREMENT - Data sorted by last login time (descending)
+        // NOTA BENE: Null LastLoginTime values will appear at the end
         public async Task<IEnumerable<User>> GetAllAsync()
         {
-            // THIRD REQUIREMENT: Data sorted by last login time
             return await _context.Users
                 .OrderByDescending(u => u.LastLoginTime)
                 .ToListAsync();
@@ -46,6 +48,9 @@ namespace UserManagementApp.Infrastructure.Repositories
             await _context.SaveChangesAsync();
         }
 
+        // IMPORTANT: DeleteAsync permanently removes user from database
+        // NOTE: Deleted users are actually deleted, not just marked (requirement)
+        // NOTA BENE: Deleted users can re-register with the same email
         public async Task DeleteAsync(int id)
         {
             var user = await GetByIdAsync(id);

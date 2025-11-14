@@ -3,6 +3,12 @@ const API_BASE = '/api';
 let currentUser = null;
 let allUsers = [];
 
+// IMPORTANT: getUniqIdValue function to generate unique identifiers
+// NOTE: This function is required by project specifications
+function getUniqIdValue() {
+    return `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+}
+
 // Authentication functions
 function showRegister() {
     document.getElementById('loginSection').style.display = 'none';
@@ -252,8 +258,14 @@ async function deleteUsers() {
     const userIds = getSelectedUserIds();
     if (userIds.length === 0) return;
 
-    if (!confirm('Are you sure you want to delete the selected users? This action cannot be undone.')) {
-        return;
+    // IMPORTANT: Check if current user is in the selection
+    // NOTE: Users can delete themselves as per requirements
+    const currentUserId = currentUser?.id;
+    const deletingSelf = userIds.includes(currentUserId);
+
+    // NOTA BENE: Using Bootstrap toast instead of browser alerts (requirement: NO BROWSER ALERTS)
+    if (deletingSelf) {
+        showMessage('Warning: You are about to delete your own account. Proceeding...', 'warning');
     }
 
     try {
@@ -269,6 +281,14 @@ async function deleteUsers() {
 
         if (response.ok) {
             showMessage('Users deleted successfully', 'success');
+            
+            // IMPORTANT: If user deleted themselves, logout
+            if (deletingSelf) {
+                showMessage('You have deleted your account. Redirecting to login...', 'info');
+                setTimeout(() => logout(), 2000);
+                return;
+            }
+            
             await loadUsers();
         } else if (response.status === 401) {
             showMessage('Session expired. Please login again.', 'error');
@@ -280,9 +300,7 @@ async function deleteUsers() {
 }
 
 async function deleteUnverifiedUsers() {
-    if (!confirm('Are you sure you want to delete all unverified users? This action cannot be undone.')) {
-        return;
-    }
+    // NOTA BENE: Proceeding with operation - no browser alerts as per requirements
 
     try {
         const token = localStorage.getItem('token');
